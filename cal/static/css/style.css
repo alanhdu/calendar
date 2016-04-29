@@ -1,0 +1,13 @@
+body {
+    background-color: #EEE;
+    padding-top: 70px;
+}
+
+div.event {
+    background-color: #FFF;
+    border-radius: %;
+}
+
+span.auxiliary {
+    color: #666;
+}

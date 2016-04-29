@@ -1,8 +1,11 @@
-import datetime as dt
 from io import BytesIO
+import datetime as dt
+import json
+import random
 
 from flask import Flask, jsonify, render_template, request, send_file
 from flask_sqlalchemy import SQLAlchemy
+import markdown
 
 from .ics import to_icalendar
 
@@ -33,7 +36,14 @@ def page_not_found(e):
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    today = dt.date.today()
+    # TODO: DRY w/ events
+    start = today - dt.timedelta(days=today.isoweekday() % 7)  # Sunday 7 -> 0
+    end = start + dt.timedelta(weeks=1)
+    events = Event.query.filter((start <= Event.start) | (Event.end >= start)) \
+                        .filter((Event.start < end) | (Event.end < end)) \
+                        .order_by(Event.start, Event.end, Event.name)
+    return render_template('index.html', events=events)
 
 
 @app.route("/api/events/<int:year>/<int:month>/<int:day>")
@@ -77,3 +87,8 @@ def to_ics():
 
     return send_file(BytesIO(to_icalendar(events)), mimetype="text/calendar",
                      as_attachment=True, attachment_filename="calendar.ics")
+
+@app.template_filter("markdown")
+def jinja2_markdown(s):
+    return markdown.markdown(s)
+
