@@ -36,14 +36,20 @@ def page_not_found(e):
 
 @app.route('/')
 def home():
-    today = dt.date.today()
-    # TODO: DRY w/ events
-    start = today - dt.timedelta(days=today.isoweekday() % 7)  # Sunday 7 -> 0
+    start = dt.date.today()
     end = start + dt.timedelta(weeks=1)
     events = Event.query.filter((start <= Event.start) | (Event.end >= start)) \
                         .filter((Event.start < end) | (Event.end < end)) \
                         .order_by(Event.start, Event.end, Event.name)
     return render_template('index.html', events=events)
+
+@app.route("/search")
+def search():
+    start = dt.date.today()
+    events = Event.query.search(request.args["query"]) \
+                  .filter((start <= Event.start) | (Event.end >= start)) \
+                  .order_by(Event.start, Event.end, Event.name)
+    return render_template("index.html", events=events)
 
 
 @app.route("/api/events/<int:year>/<int:month>/<int:day>")
@@ -55,11 +61,8 @@ def events(year, month, day):
         events = Event.query
 
     start = dt.date(year, month, day)
-    start -= dt.timedelta(days=start.isoweekday() % 7)  # Sunday 7 -> 0
-    end = start + dt.timedelta(weeks=1)
 
     events = events.filter((start <= Event.start) | (Event.end >= start)) \
-                   .filter((Event.start < end) | (Event.end < end)) \
                    .order_by(Event.start, Event.end, Event.name)
     events = [event.to_json() for event in events]
     return jsonify(data=events)
@@ -68,13 +71,10 @@ def events(year, month, day):
 @app.route("/api/users/<int:year>/<int:month>/<int:day>")
 def users(year, month, day):
     start = dt.date(year, month, day)
-    start -= dt.timedelta(days=start.isoweekday() % 7)  # Sunday 7 -> 0
-    end = start + dt.timedelta(weeks=1)
 
     events = Event.query
-    events = events.filter((start <= Event.start) | (Event.end >= start)) \
-                   .filter((Event.start < end) | (Event.end < end))
-    users = {event.user for event in events}    # use set to make users unique
+    events = events.filter((start <= Event.start) | (Event.end >= start))
+    users = {event.user for event in events}    # set for uniqueness
     users = [user.to_json() for user in sorted(users, key=lambda u: u.name)]
     return jsonify(data=users)
 
@@ -91,4 +91,3 @@ def to_ics():
 @app.template_filter("markdown")
 def jinja2_markdown(s):
     return markdown.markdown(s)
-
