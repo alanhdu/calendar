@@ -5,6 +5,7 @@ dependencies:
 - flake8    # [test]
 - flask
 - iso8601
+- markdown
 - psycopg2
 - pytest    # [test]
 - python-dateutil

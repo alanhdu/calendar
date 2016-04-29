@@ -1,7 +1,5 @@
 from io import BytesIO
 import datetime as dt
-import json
-import random
 
 from flask import Flask, jsonify, render_template, request, send_file
 from flask_sqlalchemy import SQLAlchemy
@@ -38,9 +36,10 @@ def page_not_found(e):
 def home():
     start = dt.date.today()
     end = start + dt.timedelta(weeks=1)
-    events = Event.query.filter((start <= Event.start) | (Event.end >= start)) \
-                        .filter((Event.start < end) | (Event.end < end)) \
-                        .order_by(Event.start, Event.end, Event.name)
+    events = Event.query \
+                  .filter((start <= Event.start) | (Event.end >= start)) \
+                  .filter((Event.start < end) | (Event.end < end)) \
+                  .order_by(Event.start, Event.end, Event.name)
     return render_template('index.html', events=events)
 
 @app.route("/search")
